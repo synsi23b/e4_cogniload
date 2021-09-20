@@ -1,0 +1,4 @@
+pylsl
+numpi
+signal
+pyqt5

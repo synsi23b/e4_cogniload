@@ -1,0 +1,49 @@
+
+Hi Johannes,
+
+It’s great that the data are already being streamed over LSL. That simplifies things. If you can get some basic preprocessing working on the live streams,
+that would be great, as I will only have time to make the model.
+The model we build will operate in Python, so to get it working in real-time,
+
+
+
+we’ll need code to read in the data to numpy arrays as in the LSL example here or here (depending on whether you’re receiving data in chunks or in single samples). 
+
+
+If all your data is coming from one device, you need not worry about correcting the timestamps for clock offset between machines 
+but if you want to integrate it with other data sources that is necessary. 
+
+
+Once received, the data must be lowpass filtered to half of the lowest sampling rate of the time series.
+
+(Off the top of my head, I think heart rate is being given at 1 Hz, so if that’s the lowest sampling rate,
+everything would need to be low pass filtered with a cutoff of 0.5 Hz.
+
+
+Then, you’d just take samples from the other streams whose timestamps are right before those for heart rate
+
+(by timestamp) and 
+
+discard the other samples which effectively downsamples and aligns the time series at a common sampling rate.)
+
+
+Note that you should take the samples right before and not after since the low pass filter is going to cause a phase delay in the time series.
+I can simulate that offline, but it’s something you’ll ultimately need working in real time. The low pass filter should operate online 
+(not just applying a scipy filter to chunks but running continuously across chunks so as not to create artifact.)
+
+
+To keep things simple, you can just do a single-pole filter, which is basically a moving average.
+The end result will be a combined time series in which each sample contains an observation from every sensor. I’m not sure if there’s a customary transformation for some of the physiological data, but we would ideally want such preprocessing to be done in the future — for now though, given the short timeline, we’ll just try to perform classification off of relatively raw data.
+
+For the time being, I can simulate this procedure offline to train the model with. But ultimately you’ll want it running live, which shouldn’t be too bad over LSL.
+If your subjects are moving around, you’ll probably also want to use the accelerometer to discard samples that exceed some movement threshold, as you had mentioned. 
+The first thing I’ll try is to perform regression for cognitive load on single samples. If this works relatively well, all you’ll need to do is feed single samples to the model. I’ll make the model consistent with the scikit-learn API (if not just an sklearn model), so you know ahead of time how to call it. So the model will be evaluated, maximally, at the sampling rate of the aggregated time series. I don’t know how well this will work, since ideally we would aggregate data across time. The quick and dirty solution would be to assume adjacent samples represent the same cognitive state and average predictions across time points, though there are fancier ways to aggregate we could try in the future. Perhaps this will work well enough; we won’t know until we try. If you want to be extra prepared, you can start writing a data buffer for averaging predictions. The latency of predictions would then be limited by the number of samples we have to average over to get an acceptable error. If I can without introducing unnecessary delay (or complicating the model API), I’ll try to get the predictions in terms of probability distributions so they’re easy to average over.
+
+The best sort of model would probably be a sort of hidden markov model (but with ordinal, rather than totally discrete states) or some other sort of latent variable model, which explicitly models the dependency between samples and the transition probability between cognitive states. This would be particularly nice in application, I think, since my understanding is that many robots tend to use graphical models with Markov assumptions for online state estimation. But we don’t have time to worry about that now, I don’t think. 
+
+So if the simple model works, we shouldn’t be dealing with much larger delays than are intrinsic in the hardware/downsampling procedure. If you can get this online filtering/downsampling working, applying the model should be relatively easy. 
+
+However, you'll also need to calibrate the model on individual subjects. The easiest way to do this, ad hoc, would be to have them do backward digit spans and fully re-training. There are more clever solutions, like a multilevel model, but less feasible in the time we have. This can probably just be done offline, then you’d save the trained model and load it back into the real-time script. So I’ll send my full code for training the model offline when it is complete.
+
+Thanks,
+John
