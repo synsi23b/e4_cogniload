@@ -1,0 +1,26 @@
+name: eda
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python>=3.7
+- ipython
+- jupyter
+- mkl
+- pymc3<4.0
+- theano-pymc
+- arviz
+- future>=0.16.0
+- joblib>=0.11
+- matplotlib>=2.1.1
+- numpy>=1.13.1
+- numpydoc>=0.7.0
+- pandas>=0.21.1
+- scikit-learn>=0.19.1
+- scipy>=1.0.0
+- seaborn>=0.8.1
+- six>=1.10.0
+- tqdm>=4.8.4
+- pip
+- pip:
+  - git+https://github.com/john-veillette/pymc-learn.git@267b0084438616b869866194bc167c332c3e3547

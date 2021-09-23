@@ -2,6 +2,7 @@ import pylsl
 from helper import get_participant_folders
 from threading import Thread
 from time import sleep
+from datetime import datetime
 
 
 # filename, channels, type, start_offset
@@ -19,7 +20,7 @@ def main():
     threads = []
     for participant in get_participant_folders():
         for file, channel, type, offset in datafiles:
-            t = Thread(target=start_stream, args=(participant / file, channel, type, offset))
+            t = Thread(target=start_stream, args=(participant / file, channel, type, offset, datetime.utcnow().timestamp()))
             threads.append(t)
             t.start()
     sleep(2.0)
@@ -29,7 +30,7 @@ def main():
     for t in threads:
         t.join()
 
-def start_stream(file, channel, type, offset):
+def start_stream(file, channel, type, offset, starttime):
     print(f"Starting stream of {file}")
     with open(file, "r") as infile:
         startstamp = infile.readline()
@@ -44,13 +45,15 @@ def start_stream(file, channel, type, offset):
         outlet = pylsl.StreamOutlet(sinfo)
         if channel == 1:
             for l in lines:
-                outlet.push_sample([float(l)])
+                outlet.push_sample([float(l)], starttime)
+                starttime += sleeptime
                 sleep(sleeptime)
                 if not running:
                     break
         elif channel == 3:
             for l in lines:
-                outlet.push_sample([float(x) for x in l.split(",")])
+                outlet.push_sample([float(x) for x in l.split(",")], starttime)
+                starttime += sleeptime
                 sleep(sleeptime)
                 if not running:
                     break

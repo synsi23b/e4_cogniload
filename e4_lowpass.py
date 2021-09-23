@@ -9,6 +9,7 @@ from collections import deque
 
 running = True
 
+HR_FILTER_WINDOW_LENGTH = 15
 
 def main():
     global running
@@ -26,8 +27,8 @@ def main():
 
 def collect_samples(participant, streams):
     hr_stream = None
-    hr_queue = deque(maxlen=10)
-    hr_lp_sos = signal.butter(5, 0.5, btype="lowpass", analog=True, output='sos')
+    hr_queue = deque(maxlen=HR_FILTER_WINDOW_LENGTH)
+    hr_lp_sos = signal.butter(3, 0.5, btype="lowpass", analog=False, output='sos')
     acc_stream = None
     gsr_stream = None
     for st in streams:
@@ -55,35 +56,33 @@ def collect_samples(participant, streams):
 
     hr_last_stamp = None
     # build up small queue to run filter on
-    samples, stamps = hr_stream.pull_chunk()
-    if samples is not None:
-        hr_last_stamp = stamps[-1]
-        hr_queue = deque(samples[-10:], maxlen=10)
-    while len(hr_queue) < 10:
+    while len(hr_queue) < HR_FILTER_WINDOW_LENGTH:
         sam, hr_last_stamp = hr_stream.pull_sample()
-        hr_queue.append(sam)
+        hr_queue.append(sam[0])
 
     print("HR queue filled, running output live")
     while running:
         hrsam, hr_last_stamp = hr_stream.pull_sample()
-        hr_queue.append(hrsam)
+        #time_cor = hr_stream.time_correction()
+        #hr_last_stamp += time_cor  # but than we also need it at the other streams, dont do it, easy!
+        hr_queue.append(hrsam[0])
         gsr =  get_last_value_before(hr_last_stamp, gsr_stream)
         acc_size = calc_acc(acc_stream)
-        lp_hr = signal.sosfilt(hr_lp_sos, hr_queue)
+        lp_hr = signal.sosfiltfilt(hr_lp_sos, hr_queue)[-1]
         calculate_output(hr_last_stamp, lp_hr, gsr, acc_size)
 
 
 def get_last_value_before(stamp, inlet):
-    samples, stamps = inlet.pull_chunks()
+    samples, stamps = inlet.pull_chunk()
     if samples:
-        for sm, st in reversed(zip(samples, stamps)):
+        for sm, st in reversed(list(zip(samples, stamps))):
             if st < stamp:
-                return sm
+                return sm[0]
     return None
 
 
 def calc_acc(inlet):
-    samples, stamps = inlet.pull_chunks()
+    samples, stamps = inlet.pull_chunk()
     if samples:
         return np.linalg.norm(samples[-1])
     return 1.0

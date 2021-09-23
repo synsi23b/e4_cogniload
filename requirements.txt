@@ -1,4 +1,4 @@
 pylsl
 numpi
-signal
+scipy
 pyqt5
