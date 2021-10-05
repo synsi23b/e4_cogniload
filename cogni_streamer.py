@@ -14,8 +14,9 @@ ACC_MAX = 32
 
 
 participants = [
-    "inno8",
-    "inno9"
+    "inno9",
+    "inno11",
+    "inno12"
 ]
 
 
