@@ -26,4 +26,5 @@ def get_subject_group(label):
 
 
 def predict(subject_group, eda, hr, offload = 0):
-    return pipeline.predict(np.array([[eda, hr, offload]]), subject_group, 50)
+    # n-samples paramter weighs time against accuracy of the result, keep low for realtime estimates
+    return pipeline.predict(np.array([[eda, hr, offload]]), group=subject_group, n_samples=100)

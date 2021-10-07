@@ -16,9 +16,17 @@ datafiles = [
 
 running = True
 
+looking_for_part = [
+    "inno9",
+]
+
 def main():
     threads = []
     for participant in get_participant_folders():
+        if participant.name not in looking_for_part:
+            print(f"skipping {participant}")
+            continue
+        print(f"starting {participant}")
         for file, channel, type, offset in datafiles:
             t = Thread(target=start_stream, args=(participant / file, channel, type, offset, datetime.utcnow().timestamp()))
             threads.append(t)
