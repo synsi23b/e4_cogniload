@@ -82,6 +82,7 @@ def collect_samples(participant):
     gsr_stream.open_stream()
     # get first heart rate sample, whenever that might come
     hrsam, hr_last_stamp = hr_stream.pull_sample()
+    hrsam = hrsam[0]
 
     # build up small queue to run filter on
     gsr_last_stamp = None
