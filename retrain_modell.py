@@ -83,8 +83,8 @@ def plot_subj(sub):
     plt.title('model predictions for subject %d'%sub)
     plt.show()
 
-# for example 6
-plot_subj(6)
+# for example 1
+plot_subj(1)
 
 # Of course all these predictions are off of single samples of EDA/HR, and you'll want to consider multiple samples at once. 
 # I'm guessing performance will improve when aggregating across time. Just maintain a rolling average of the model predictions.

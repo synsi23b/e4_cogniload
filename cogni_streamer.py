@@ -18,8 +18,8 @@ ACC_MAX = 32
 # LSL stream source ID has to match these IDs
 participants = [
     "inno9",
-    "inno11",
-    "inno12"
+    #"inno11",
+    #"inno12"
 ]
 
 
