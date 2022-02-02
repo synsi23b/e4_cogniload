@@ -1,3 +1,4 @@
+from datetime import datetime
 import threading
 #from pylsl.pylsl import StreamInlet, StreamInfo
 from helper import get_participant_names
@@ -18,6 +19,8 @@ ACC_MAX = 32
 # LSL stream source ID has to match these IDs
 participants = [
     "inno9",
+    "leile",
+    "adri"
     #"inno11",
     #"inno12"
 ]
@@ -48,6 +51,8 @@ def collect_samples(participant):
     gsr_stream = None
     gsr_queue = deque(maxlen=GSR_LP_FILTER_WINDOW_LENGTH)
     gsr_lp_sos = signal.butter(3, 0.5, btype="lowpass", analog=False, output='sos', fs=4.0)
+
+    outfilename = f"{round(datetime.utcnow().timestamp())}_{participant}.csv"
 
     while running:
         info_msg(participant, "Looking for LSL streams")
@@ -110,7 +115,7 @@ def collect_samples(participant):
             for sam in samples:
                 gsr_queue.append(sam[0])
         else:
-            info_msg(participant, "No EDA -> skipping one round.")
+            #info_msg(participant, "No EDA -> skipping one round.")
             continue
         
         # calculate size of ACC to determine if the data right now is unreliable anyway
@@ -125,6 +130,9 @@ def collect_samples(participant):
         # than just call the model
         prev_load = model_loader.predict(sub_group, lp_gsr, hrsam)
         outlet.push_sample([prev_load], gsr_last_stamp)
+        with open(outfilename, "a") as of:
+            of.write(f"{gsr_last_stamp},{prev_load[0]}\n")
+        print(participant, prev_load[0])
 
 
 def info_msg(part, msg):
