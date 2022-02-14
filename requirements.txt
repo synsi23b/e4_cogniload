@@ -2,3 +2,4 @@ pylsl
 numpi
 scipy
 pyqt5
+xlsxwriter
